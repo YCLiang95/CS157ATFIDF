@@ -64,7 +64,8 @@ public class Tokenizer {
 	
 	void splite(String s) {
 		String t = "";
-		boolean number = false;;
+		boolean number = false;
+		s = s.toLowerCase();
 		
 		for (int i = 0; i < s.length(); i ++)
 			if (alphabet.contains(s.substring(i, i + 1)))
@@ -120,8 +121,8 @@ public class Tokenizer {
 		t.tokenTable.sort(new TokenComparator());
 		
 		//Debug output
-		for (Token s : t.tokenTable)
-			System.out.println(s.token + " " + s.DID);
+		//for (Token s : t.tokenTable)
+			//System.out.println(s.token + " " + s.DID);
 		
 		ArrayList<TFIDF> list2 = new ArrayList<TFIDF>();
 		String last = "";
