@@ -12,7 +12,7 @@ import java.util.Scanner;
 class Token{
 	//Token ID
 	int TID;
-	//Tiken
+	//Token
 	String token;
 	//Document ID
 	int DID;
@@ -40,6 +40,16 @@ class TFIDF{
 	}
 }
 
+class Document{
+	int wordCount;
+	int DID;
+	
+	Document (int DID, int wordCount){
+		this.DID = DID;
+		this.wordCount = wordCount;
+	}
+}
+
 //For list sorting
 class TokenComparator implements  Comparator<Token>{
     public int compare(Token a, Token b) { 
@@ -54,8 +64,6 @@ class TFIDFComparator implements  Comparator<TFIDF>{
     }
 }
 
-
-
 public class Tokenizer {
 	//Document ID
 	int DID = 0;
@@ -63,65 +71,73 @@ public class Tokenizer {
 	String alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	String numbers = "0123456789";
 	public ArrayList<Token> tokenTable;
+	public ArrayList<Document> documentTable;
 	
 	public Tokenizer() {
 		list = new ArrayList<Token>();
 		tokenTable = new ArrayList<Token>();
+		documentTable = new ArrayList<Document>();
 	}
 	
 	//load a single file with scanner
 	void LoadFile(String filename) throws FileNotFoundException{
+		int LastTID = list.size();
 		Scanner scanner = new Scanner (new File(filename));
 		while (scanner.hasNext())
 			splite(scanner.next());
 		scanner.close();
+		documentTable.add(new Document(DID, list.size() - LastTID));
 	}
 	
 	//Split the string into token
 	void splite(String s) {
 		String t = "";
-		boolean number = false;
+		//boolean number = false;
 		s = s.toLowerCase();
 		
 		//token ID is equal to current size of the token list
+		//Remove all the number logic in this iteration
+		//I used to keeps numbers as a whole as a word
+		//But professor only requires us to treat single digit as a word
 		for (int i = 0; i < s.length(); i ++) {
 			//if (DID == 2) 
 			//	System.out.println(s.substring(i, i + 1));
 			if (alphabet.contains(s.substring(i, i + 1))) {
-				if (number) {
-					list.add(new Token(list.size(), t, DID));
-					t = s.substring(i, i + 1);
-					number = false;
-				} else {
+				//if (number) {
+					//list.add(new Token(list.size(), t, DID));
+					//t = s.substring(i, i + 1);
+					//number = false;
+				//} else {
 					t = t + s.charAt(i);
-				}
+				//}
 			//We don't allows words that start with number end of alphabet like 123abc
 			//Those will be treated as 2 token, "123" and "abc"
-			} else if (numbers.contains(s.substring(i, i + 1))) {
-				if (number || t.length() == 0) {
-					t = t  + s.charAt(i);
-					number = true;
-				} else {
-					list.add(new Token(list.size(), t, DID));
-					t = s.substring(i, i + 1);
-					number = true;
-				}
+			//} else if (numbers.contains(s.substring(i, i + 1))) {
+				//if (number || t.length() == 0) {
+					//t = t  + s.charAt(i);
+					//number = true;
+				//} else {
+				//	list.add(new Token(list.size(), t, DID));
+				//	t = s.substring(i, i + 1);
+				//	number = true;
+				//}
 			//I actually don't need to consider " " because scanner already ignore all the space
 			//But I'll leave it there
 			} else if (s.substring(i, i + 1).equals(" ") ){
 				if (!t.equals("")) list.add(new Token(list.size(), t, DID));
 				t = "";
-				number = false;
+				//number = false;
 			} else {
 				if (!t.equals("")) list.add(new Token(list.size(), t, DID));
 				list.add(new Token(list.size(), s.substring(i, i + 1), DID));
 				t = "";
-				number = false;
+				//number = false;
 			}
 		}
 		if (!t.equals("")) list.add(new Token(list.size(), t, DID));
 	}
 	
+	//The intial table that contains all the token and their ID
 	void TokenTable() {
 		for (Token s : list) {
 			if (alphabet.contains(s.token.substring(0, 1)))
@@ -129,12 +145,24 @@ public class Tokenizer {
 		}
 	}
 	
+	//An seperate table for documents that contains their word counts
+	void documentTable() {
+		
+	}
+	
 	public static void main (String args[]) throws FileNotFoundException{
+		int DocumentCount = 2;
 		Tokenizer t = new Tokenizer();
-		for (int i = 1; i < 11; i ++) {
-			t.DID = i;
-			t.LoadFile("Data_" + i + ".txt");
-		}
+		//for (int i = 1; i < 11; i ++) {
+			//t.DID = i;
+			//t.LoadFile("Data_" + i + ".txt");
+		//}
+		
+		//Some smaller testing samples
+		//t.DID = 1;
+		//t.LoadFile("t1.txt");
+		//t.DID = 2;
+		//t.LoadFile("t2.txt");
 		
 		//Debug output
 		//for (int i = 0; i < t.list.size(); i ++) 
@@ -152,13 +180,13 @@ public class Tokenizer {
 		//Document frequency counter
 		int counter = 0;
 		//Token Frequency counter
-		int did[] = new int[11];
+		int did[] = new int[DocumentCount + 1];
 		
 		//calculate the TFIDF
 		for (Token s : t.tokenTable)
 			if (!(last.equals("") || s.token.equals(last))) {
-				for (int i = 1; i < 11; i ++) {
-					if (did[i] > 0) list2.add(new TFIDF(i, last, did[i] * Math.log(10.0f / (double) counter) / Math.log(2)));
+				for (int i = 1; i < DocumentCount + 1; i ++) {
+					if (did[i] > 0) list2.add(new TFIDF(i, last, ((double)did[i] / (double)t.documentTable.get(i - 1).wordCount) * Math.log((double) DocumentCount / (double) counter) / Math.log(2)));
 					did[i] = 0;
 				}
 				last = s.token;
@@ -169,16 +197,17 @@ public class Tokenizer {
 				if (last.equals("")) {
 					last = s.token;
 					did[s.DID] = 1;
+					counter++;
 				}
 				
-				if (did[s.DID] != 0) 
+				if (did[s.DID] == 0) 
 					counter ++;
 				
 				did[s.DID] += 1;
 				
 			}
-		for (int i = 1; i < 11; i ++)
-			list2.add(new TFIDF(i, last, did[i] * Math.log(10.0f / (double) counter) / Math.log(2)));
+		for (int i = 1; i < DocumentCount + 1; i ++)
+			list2.add(new TFIDF(i, last, (did[i] / t.documentTable.get(i - 1).wordCount) * Math.log((double)DocumentCount / (double) counter) / Math.log(2)));
 		list2.sort(new TFIDFComparator());
 		
 		//print out document ID / Token / TFIDF
