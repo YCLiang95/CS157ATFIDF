@@ -265,29 +265,41 @@ public class Tokenizer {
 		
 		//Some smaller testing samples
 		//degbugRead(t);
-		PrintStream out = new PrintStream(new FileOutputStream("DocumentID.txt"));
+		PrintStream out = new PrintStream(new FileOutputStream("DocumentID1.txt"));
 		System.setOut(out);
-		for (int i = 1; i < 22; i ++) {
+		for (int i = 1; i < 2; i ++) {
 			System.out.println("Loading..." +  i);
-			DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\tylin-" + i + "\\", t);
+			//DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\tylin-" + i + "\\", t);
+			DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\" + i, t);
 			//System.out.println("Compute" + DocumentCount + " " + t.list.size());
 		}
 		System.setOut(System.out);
 		t.TokenTable();
 		t.tokenTable.sort(new TokenComparator());
+		for (int i = 0; i < t.tokenTable.size(); i ++) {
+			System.out.println(i + " " + t.tokenTable.get(i).token);
+		}
 		ArrayList<TFIDF> list2 = t.computeTFIDF(DocumentCount);
 
 		double max = 0f;
 		double last = list2.get(0).tfidf;
+		String lastToken = "";
+		int lastTokenDID = 0;
 		
-		out = new PrintStream(new FileOutputStream("output.txt"));
+		out = new PrintStream(new FileOutputStream("output1.txt"));
 		System.setOut(out);
 		//print out document ID / Token / TFIDF
 		for (TFIDF a : list2) {
-			max = Math.max(max, (a.tfidf - last));
+			if (a.tfidf - last > max) {
+				max = a.tfidf - last;
+				last = a.tfidf;
+				lastToken = a.token;
+				lastTokenDID = a.DID;
+			}
+			//max = Math.max(max, (a.tfidf - last));
 			last = a.tfidf;
 			System.out.println(a.DID + " " + a.token + " " + a.tfidf);
 		}
-		System.out.println("Largest gap: " + max);
+		System.out.println("Largest gap: " + max + "Token:" + lastTokenDID + lastToken);
 	}
 }
