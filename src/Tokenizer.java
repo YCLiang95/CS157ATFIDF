@@ -105,11 +105,13 @@ public class Tokenizer {
 			splite(scanner.next());
 		scanner.close();
 		documentTable.add(new Document(DID, list.size() - LastTID));
-        try {
-            docWriter.writeDoc(list.size() - LastTID, DID);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+		if (useSQL) {
+	        try {
+	            docWriter.writeDoc(list.size() - LastTID, DID);
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+		}
 		DID ++;
 	}
 	
@@ -207,8 +209,8 @@ public class Tokenizer {
 			currentToken ++;
 			if (currentToken % 1000 == 0) System.out.println("Calculating" + currentToken + "/" + tokenTable.size());
 			if (!(last.equals("") || s.token.equals(last))) {
-				for (int i = 1; i < DocumentCount + 1; i ++) {
-					if (did[i] > 0 && documentTable.get(i - 1).wordCount > 0) list2.add(new TFIDF(i, last, ((double)did[i] / (double)documentTable.get(i - 1).wordCount) * Math.log((double) DocumentCount / ((double) counter)) / Math.log(2)));
+				for (int i = 0; i < DocumentCount; i ++) {
+					if (did[i] > 0 && documentTable.get(i).wordCount > 0) list2.add(new TFIDF(i, last, ((double)did[i] / (double)documentTable.get(i).wordCount) * Math.log((double) DocumentCount / ((double) counter)) / Math.log(2)));
 					did[i] = 0;
 				}
 				last = s.token;
@@ -259,29 +261,38 @@ public class Tokenizer {
 		return counter;
 	}
 	
-	public static void main (String args[]) throws FileNotFoundException{
+	public void binaryTable() {
+		for (int i = 0; i < tokenTable.size() - 1; i++) {
+			for (int j = i; j < tokenTable.size(); j ++){
+				
+			}
+		}
+	}
+	
+	public void gapCutoff() {
+		
+	}
+	
+	public static void main (String args[]){
 		int DocumentCount = 0;
 		Tokenizer t = new Tokenizer();
-		//for (int i = 1; i < 11; i ++) {
-			//t.DID = i;
-			//t.LoadFile("Data_" + i + ".txt");
-		//}
+
+		if (args.length >= 2 && args[1].equals("SQL")) t.useSQL = true;
 		
-		//Some smaller testing samples
-		//degbugRead(t);
-		PrintStream out = new PrintStream(new FileOutputStream("DocumentID1.txt"));
-		System.setOut(out);
-		for (int i = 1; i < 2; i ++) {
-			System.out.println("Loading..." +  i);
-			//DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\tylin-" + i + "\\", t);
-			DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\" + i, t);
-			//System.out.println("Compute" + DocumentCount + " " + t.list.size());
-		}
-		System.setOut(System.out);
+		PrintStream out;
+		try {
+			out = new PrintStream(new FileOutputStream("output\\DocumentID.txt"));
+			System.setOut(out);
+			//DocumentCount += Load(args[0], t);
+			DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\", t);
+			System.setOut(System.out);
+		} catch (Exception e){}
+		
 		t.TokenTable();
+		//t.binaryTable();
 		t.tokenTable.sort(new TokenComparator());
 		for (int i = 0; i < t.tokenTable.size(); i ++) {
-			System.out.println(i + " " + t.tokenTable.get(i).token);
+			System.out.println(i + " " + t.tokenTable.get(i).DID + " " + t.tokenTable.get(i).token);
 		}
 		ArrayList<TFIDF> list2 = t.computeTFIDF(DocumentCount);
 
@@ -290,8 +301,11 @@ public class Tokenizer {
 		String lastToken = "";
 		int lastTokenDID = 0;
 		
-		out = new PrintStream(new FileOutputStream("output1.txt"));
-		System.setOut(out);
+		try {
+			out = new PrintStream(new FileOutputStream("output\\output.txt"));
+			System.setOut(out);
+		} catch (Exception e){}
+		
 		//print out document ID / Token / TFIDF
 		for (TFIDF a : list2) {
 			if (a.tfidf - last > max) {
@@ -300,7 +314,6 @@ public class Tokenizer {
 				lastToken = a.token;
 				lastTokenDID = a.DID;
 			}
-			//max = Math.max(max, (a.tfidf - last));
 			last = a.tfidf;
 			System.out.println(a.DID + " " + a.token + " " + a.tfidf);
 			if (t.useSQL) {
@@ -311,59 +324,22 @@ public class Tokenizer {
 	            }
 			}
 		}
-		System.out.println("Largest gap: " + max + "Token:" + lastTokenDID + lastToken);
+		System.out.println("Largest gap: " + max + " Token:" + lastTokenDID + lastToken);
+		
+		try {
+			out = new PrintStream(new FileOutputStream("output\\Binary_output.txt"));
+			System.setOut(out);
+		} catch (Exception e) {}
+		
+		int i = 0;
+		for (TFIDF a : list2) {
+			double p = (double) i / (double) list2.size();
+			//cut off at 80% ~ 95%
+			if (p < 0.8f || p > 0.95f)
+				System.out.println(a.DID + " " + a.token + " " + 0);
+			else
+				System.out.println(a.DID + " " + a.token + " " + 1);
+			i ++;
+		}
 	}
 }
-
-
-
-
-
-////Split the string into token
-////Some old spliting code that include number logics. No longer used
-//void spliteOld(String s) {
-//	String t = "";
-//	//boolean number = false;
-//	s = s.toLowerCase();
-//	
-//	//token ID is equal to current size of the token list
-//	//Remove all the number logic in this iteration
-//	//I used to keeps numbers as a whole as a word
-//	//But professor only requires us to treat single digit as a word
-//	for (int i = 0; i < s.length(); i ++) {
-//		//if (DID == 2) 
-//		//	System.out.println(s.substring(i, i + 1));
-//		if (alphabet.contains(s.substring(i, i + 1))) {
-//			//if (number) {
-//				//list.add(new Token(list.size(), t, DID));
-//				//t = s.substring(i, i + 1);
-//				//number = false;
-//			//} else {
-//				t = t + s.charAt(i);
-//			//}
-//		//We don't allows words that start with number end of alphabet like 123abc
-//		//Those will be treated as 2 token, "123" and "abc"
-//		//} else if (numbers.contains(s.substring(i, i + 1))) {
-//			//if (number || t.length() == 0) {
-//				//t = t  + s.charAt(i);
-//				//number = true;
-//			//} else {
-//			//	list.add(new Token(list.size(), t, DID));
-//			//	t = s.substring(i, i + 1);
-//			//	number = true;
-//			//}
-//		//I actually don't need to consider " " because scanner already ignore all the space
-//		//But I'll leave it there
-//		} else if (s.substring(i, i + 1).equals(" ") ){
-//			if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-//			t = "";
-//			//number = false;
-//		} else {
-//			if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-//			list.add(new Token(list.size(), s.substring(i, i + 1), DID));
-//			t = "";
-//			//number = false;
-//		}
-//	}
-//	if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-//}
