@@ -79,6 +79,7 @@ public class Tokenizer {
     private Writer tokenWriter;
     private Writer docWriter;
     private Writer TFIDFWriter;
+    public Boolean useSQL = false;
 	
 	public Tokenizer() {
 		list = new ArrayList<Token>();
@@ -136,83 +137,48 @@ public class Tokenizer {
 				//if (!t.equals("")) list.add(new Token(list.size(), t, DID));
 				//t = "";
 			} else {
-                if (!t.equals("")) {
-                    Token tk = new Token(list.size(), t, DID);
-                    list.add(tk);
-                    try {
-                        tokenWriter.writeToken(t, list.size(), DID);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                String temp = s.substring(i, i + 1);
-				list.add(new Token(list.size(), temp, DID));
-                try {
-                    tokenWriter.writeToken(temp, list.size(), DID);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-				t = "";
+				if (!useSQL) {
+					if (!t.equals("")) list.add(new Token(list.size(), t, DID));
+					list.add(new Token(list.size(), s.substring(i, i + 1), DID));
+				} else {
+//Jiabao's SQL code
+	                if (!t.equals("")) {
+	                    Token tk = new Token(list.size(), t, DID);
+	                    list.add(tk);
+	                    try {
+	                        tokenWriter.writeToken(t, list.size(), DID);
+	                    } catch (IOException e) {
+	                        e.printStackTrace();
+	                    }
+	                }
+	                String temp = s.substring(i, i + 1);
+					list.add(new Token(list.size(), temp, DID));
+	                try {
+	                    tokenWriter.writeToken(temp, list.size(), DID);
+	                } catch (IOException e) {
+	                    e.printStackTrace();
+	                }
+					t = "";
+				}
 			}
 		}
         if (!t.equals("")) {
-            Token tk = new Token(list.size(), t, DID);
-            list.add(tk);
-            try {
-                tokenWriter.writeToken(t, list.size(), DID);
-            } catch (IOException e) {
-                e.printStackTrace();
+        	if (!useSQL) {
+        		list.add(new Token(list.size(), t, DID));
+        	} else {
+	            Token tk = new Token(list.size(), t, DID);
+	            list.add(tk);
+	            try {
+	                tokenWriter.writeToken(t, list.size(), DID);
+	            } catch (IOException e) {
+	                e.printStackTrace();
+	            }
             }
         }
+//End of Jiabao's SQL code
+        
 	}
-	
-	//Split the string into token
-	void spliteOld(String s) {
-		String t = "";
-		//boolean number = false;
-		s = s.toLowerCase();
-		
-		//token ID is equal to current size of the token list
-		//Remove all the number logic in this iteration
-		//I used to keeps numbers as a whole as a word
-		//But professor only requires us to treat single digit as a word
-		for (int i = 0; i < s.length(); i ++) {
-			//if (DID == 2) 
-			//	System.out.println(s.substring(i, i + 1));
-			if (alphabet.contains(s.substring(i, i + 1))) {
-				//if (number) {
-					//list.add(new Token(list.size(), t, DID));
-					//t = s.substring(i, i + 1);
-					//number = false;
-				//} else {
-					t = t + s.charAt(i);
-				//}
-			//We don't allows words that start with number end of alphabet like 123abc
-			//Those will be treated as 2 token, "123" and "abc"
-			//} else if (numbers.contains(s.substring(i, i + 1))) {
-				//if (number || t.length() == 0) {
-					//t = t  + s.charAt(i);
-					//number = true;
-				//} else {
-				//	list.add(new Token(list.size(), t, DID));
-				//	t = s.substring(i, i + 1);
-				//	number = true;
-				//}
-			//I actually don't need to consider " " because scanner already ignore all the space
-			//But I'll leave it there
-			} else if (s.substring(i, i + 1).equals(" ") ){
-				if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-				t = "";
-				//number = false;
-			} else {
-				if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-				list.add(new Token(list.size(), s.substring(i, i + 1), DID));
-				t = "";
-				//number = false;
-			}
-		}
-		if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-	}
+
 	
 	//The intial table that contains all the token and their ID
 	void TokenTable() {
@@ -337,12 +303,67 @@ public class Tokenizer {
 			//max = Math.max(max, (a.tfidf - last));
 			last = a.tfidf;
 			System.out.println(a.DID + " " + a.token + " " + a.tfidf);
-            try {
-                TFIDFWriter.writeTFIDF(a.token, a.tfidf, a.DID);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+			if (t.useSQL) {
+	            try {
+	            	t.TFIDFWriter.writeTFIDF(a.token, a.tfidf, a.DID);
+	            } catch (IOException e) {
+	                e.printStackTrace();
+	            }
+			}
 		}
 		System.out.println("Largest gap: " + max + "Token:" + lastTokenDID + lastToken);
 	}
 }
+
+
+
+
+
+////Split the string into token
+////Some old spliting code that include number logics. No longer used
+//void spliteOld(String s) {
+//	String t = "";
+//	//boolean number = false;
+//	s = s.toLowerCase();
+//	
+//	//token ID is equal to current size of the token list
+//	//Remove all the number logic in this iteration
+//	//I used to keeps numbers as a whole as a word
+//	//But professor only requires us to treat single digit as a word
+//	for (int i = 0; i < s.length(); i ++) {
+//		//if (DID == 2) 
+//		//	System.out.println(s.substring(i, i + 1));
+//		if (alphabet.contains(s.substring(i, i + 1))) {
+//			//if (number) {
+//				//list.add(new Token(list.size(), t, DID));
+//				//t = s.substring(i, i + 1);
+//				//number = false;
+//			//} else {
+//				t = t + s.charAt(i);
+//			//}
+//		//We don't allows words that start with number end of alphabet like 123abc
+//		//Those will be treated as 2 token, "123" and "abc"
+//		//} else if (numbers.contains(s.substring(i, i + 1))) {
+//			//if (number || t.length() == 0) {
+//				//t = t  + s.charAt(i);
+//				//number = true;
+//			//} else {
+//			//	list.add(new Token(list.size(), t, DID));
+//			//	t = s.substring(i, i + 1);
+//			//	number = true;
+//			//}
+//		//I actually don't need to consider " " because scanner already ignore all the space
+//		//But I'll leave it there
+//		} else if (s.substring(i, i + 1).equals(" ") ){
+//			if (!t.equals("")) list.add(new Token(list.size(), t, DID));
+//			t = "";
+//			//number = false;
+//		} else {
+//			if (!t.equals("")) list.add(new Token(list.size(), t, DID));
+//			list.add(new Token(list.size(), s.substring(i, i + 1), DID));
+//			t = "";
+//			//number = false;
+//		}
+//	}
+//	if (!t.equals("")) list.add(new Token(list.size(), t, DID));
+//}
