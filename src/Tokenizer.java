@@ -4,6 +4,7 @@
 
 import java.io.File; 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -75,6 +76,9 @@ public class Tokenizer {
 	String numbers = "0123456789";
 	public ArrayList<Token> tokenTable;
 	public ArrayList<Document> documentTable;
+    private Writer tokenWriter;
+    private Writer docWriter;
+    private Writer TFIDFWriter;
 	
 	public Tokenizer() {
 		list = new ArrayList<Token>();
@@ -83,6 +87,13 @@ public class Tokenizer {
 		alphabetArray = new boolean[65536];
 		for (int i = 0; i < alphabet.length(); i++)
 			alphabetArray[Character.getNumericValue(alphabet.charAt(i))] = true;
+        try {
+            tokenWriter = new Writer("INSERT_TOKEN");
+            docWriter = new Writer("INSERT_DOCUMENT");
+            TFIDFWriter = new Writer("INSERT_TFIDF");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
 	}
 	
 	//load a single file with scanner
@@ -93,6 +104,11 @@ public class Tokenizer {
 			splite(scanner.next());
 		scanner.close();
 		documentTable.add(new Document(DID, list.size() - LastTID));
+        try {
+            docWriter.writeDoc(list.size() - LastTID, DID);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		DID ++;
 	}
 	
@@ -120,12 +136,34 @@ public class Tokenizer {
 				//if (!t.equals("")) list.add(new Token(list.size(), t, DID));
 				//t = "";
 			} else {
-				if (!t.equals("")) list.add(new Token(list.size(), t, DID));
-				list.add(new Token(list.size(), s.substring(i, i + 1), DID));
+                if (!t.equals("")) {
+                    Token tk = new Token(list.size(), t, DID);
+                    list.add(tk);
+                    try {
+                        tokenWriter.writeToken(t, list.size(), DID);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                String temp = s.substring(i, i + 1);
+				list.add(new Token(list.size(), temp, DID));
+                try {
+                    tokenWriter.writeToken(temp, list.size(), DID);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 				t = "";
 			}
 		}
-		if (!t.equals("")) list.add(new Token(list.size(), t, DID));
+        if (!t.equals("")) {
+            Token tk = new Token(list.size(), t, DID);
+            list.add(tk);
+            try {
+                tokenWriter.writeToken(t, list.size(), DID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 	}
 	
 	//Split the string into token
@@ -299,6 +337,11 @@ public class Tokenizer {
 			//max = Math.max(max, (a.tfidf - last));
 			last = a.tfidf;
 			System.out.println(a.DID + " " + a.token + " " + a.tfidf);
+            try {
+                TFIDFWriter.writeTFIDF(a.token, a.tfidf, a.DID);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
 		}
 		System.out.println("Largest gap: " + max + "Token:" + lastTokenDID + lastToken);
 	}
