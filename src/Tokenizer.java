@@ -35,6 +35,7 @@ class TFIDF{
 	String token;
 	//TFIDF
 	double tfidf;
+	int TID;
 	
 	TFIDF(int DID, String token, double tfidf){
 		this.DID = DID;
@@ -261,16 +262,7 @@ public class Tokenizer {
 		return counter;
 	}
 	
-	public void binaryTable() {
-		for (int i = 0; i < tokenTable.size() - 1; i++) {
-			for (int j = i; j < tokenTable.size(); j ++){
-				
-			}
-		}
-	}
-	
-	public void gapCutoff() {
-		
+	public void twoConcept() {
 	}
 	
 	public static void main (String args[]){
@@ -280,19 +272,22 @@ public class Tokenizer {
 		if (args.length >= 2 && args[1].equals("SQL")) t.useSQL = true;
 		
 		PrintStream out;
+		PrintStream sysout = System.out;
 		try {
 			out = new PrintStream(new FileOutputStream("output\\DocumentID.txt"));
 			System.setOut(out);
 			//DocumentCount += Load(args[0], t);
-			DocumentCount += Load("E:\\CS157A\\CS157ATFIDF\\data\\", t);
+			DocumentCount += Load("data\\", t);
 			System.setOut(System.out);
 		} catch (Exception e){}
 		
 		t.TokenTable();
+		System.setOut(sysout);
+		conceptMining.twoConcept(t.tokenTable, t.DID);
 		//t.binaryTable();
 		t.tokenTable.sort(new TokenComparator());
 		for (int i = 0; i < t.tokenTable.size(); i ++) {
-			System.out.println(i + " " + t.tokenTable.get(i).DID + " " + t.tokenTable.get(i).token);
+			//System.out.println(i + " " + t.tokenTable.get(i).DID + " " + t.tokenTable.get(i).token);
 		}
 		ArrayList<TFIDF> list2 = t.computeTFIDF(DocumentCount);
 
@@ -331,6 +326,8 @@ public class Tokenizer {
 			System.setOut(out);
 		} catch (Exception e) {}
 		
+		//BinaryTable bt = new BinaryTable(t.DID);
+		
 		int i = 0;
 		for (TFIDF a : list2) {
 			double p = (double) i / (double) list2.size();
@@ -339,6 +336,7 @@ public class Tokenizer {
 				System.out.println(a.DID + " " + a.token + " " + 0);
 			else
 				System.out.println(a.DID + " " + a.token + " " + 1);
+				//bt.add(a.DID, a.token);
 			i ++;
 		}
 	}
