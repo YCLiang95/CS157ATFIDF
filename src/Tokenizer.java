@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Scanner; 
 
 //A class to store token info
@@ -283,7 +284,7 @@ public class Tokenizer {
 		
 		t.TokenTable();
 		System.setOut(sysout);
-		conceptMining.twoConcept(t.tokenTable, t.DID);
+		conceptMining c = new conceptMining(t.tokenTable);
 		//t.binaryTable();
 		t.tokenTable.sort(new TokenComparator());
 		for (int i = 0; i < t.tokenTable.size(); i ++) {
@@ -328,16 +329,27 @@ public class Tokenizer {
 		
 		//BinaryTable bt = new BinaryTable(t.DID);
 		
+		BooleanMap[] keywords = new BooleanMap[t.DID];
+		for (int i = 0; i < t.DID; i ++)
+			keywords[i] = new BooleanMap();
+		
 		int i = 0;
 		for (TFIDF a : list2) {
 			double p = (double) i / (double) list2.size();
 			//cut off at 80% ~ 95%
 			if (p < 0.8f || p > 0.95f)
 				System.out.println(a.DID + " " + a.token + " " + 0);
-			else
+			else {
 				System.out.println(a.DID + " " + a.token + " " + 1);
+				keywords[a.DID].put(a.token);
 				//bt.add(a.DID, a.token);
+			}
 			i ++;
 		}
+		try {
+			out = new PrintStream(new FileOutputStream("output\\TwoConcept_output.txt"));
+			System.setOut(out);
+		} catch (Exception e) {}
+		c.twoConcept(keywords, t.DID);
 	}
 }

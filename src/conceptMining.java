@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-class DocumentFrequency{
+class BooleanMap{
 	HashMap<String, Boolean> Dfrequency;
 	
-	public DocumentFrequency() {
+	public BooleanMap() {
 		Dfrequency = new HashMap<String, Boolean>();
 	}
 	
@@ -34,27 +34,35 @@ class entryComparator implements  Comparator<Map.Entry<String, Double>>{
 
 public class conceptMining{	
 	//
-	public static int threashold = 3;
+	public static int threashold = 2;
+	ArrayList<Token> tokenTable;
 	
-	public static void twoConcept(ArrayList<Token> tokenTable, int dc) {
+	public conceptMining(ArrayList<Token> t) {
+		tokenTable = new ArrayList<Token>();
+		for (Token i : t)
+			tokenTable.add(new Token(i.TID, i.token, i.DID));
+	}
+	
+	public void twoConcept(BooleanMap[] keywords, int dc) {
 		 HashMap<String, Double> frequency = new HashMap<String, Double>();
-		 DocumentFrequency[] df = new DocumentFrequency[dc];
+		 BooleanMap[] df = new BooleanMap[dc];
 		 for (int i = 0 ; i < df.length; i ++)
-			 df[i] = new DocumentFrequency();
+			 df[i] = new BooleanMap();
 		 
-		 for (int i = 0; i < tokenTable.size() - 1; i ++) {
-			 for (int j = i + 1; j < tokenTable.size() && 
-					 			 tokenTable.get(i).DID == tokenTable.get(j).DID && 
-					 			 !tokenTable.get(i).token.equals(tokenTable.get(j).token); 
-					 		     j ++) {
-				 String t = tokenTable.get(i).token + " " + tokenTable.get(j).token;
-				 df[tokenTable.get(i).DID].put(t);
-				 if (frequency.get(t) != null)
-					 frequency.put(t, frequency.get(t) + 1.0f / (double) (j - i));
-				 else 
-					 frequency.put(t, 1.0f / (double) (j - i));
-			 }
-		 } 
+		 for (int i = 0; i < tokenTable.size() - 1; i ++) 
+			 if (keywords[tokenTable.get(i).DID].get(tokenTable.get(i).token))
+				 for (int j = i + 1; j < tokenTable.size() && 
+						 			 tokenTable.get(i).DID == tokenTable.get(j).DID && 
+						 			 !tokenTable.get(i).token.equals(tokenTable.get(j).token); 
+						 		     j ++) 
+				 	 if (keywords[tokenTable.get(j).DID].get(tokenTable.get(j).token)){
+						 String t = tokenTable.get(i).token + " " + tokenTable.get(j).token;
+						 df[tokenTable.get(i).DID].put(t);
+						 if (frequency.get(t) != null)
+							 frequency.put(t, frequency.get(t) + 1.0f / (double) (j - i));
+						 else 
+							 frequency.put(t, 1.0f / (double) (j - i));
+				 }
 		 
 		 ArrayList<Entry<String, Double>> list = new  ArrayList<Entry<String, Double>>();
 		 Iterator<Entry<String, Double>> it = frequency.entrySet().iterator();
