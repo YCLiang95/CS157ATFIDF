@@ -254,12 +254,13 @@ public class Tokenizer {
 	static int Load(String path, Tokenizer t) throws FileNotFoundException {
 		int counter = 0;
 		File directory = new File (path);
-		for (File file : directory.listFiles()) {
-			//t.DID = counter;
-			t.LoadFile(file.getAbsolutePath());
-			System.out.println(t.DID + " " + file.getAbsolutePath());
-			counter++;
-		}
+		for (File file : directory.listFiles())
+			if (file.isDirectory()) counter += Load(file.getAbsolutePath(), t);
+			else {
+				t.LoadFile(file.getAbsolutePath());
+				System.out.println(t.DID + " " + file.getAbsolutePath());
+				counter++;
+			}
 		return counter;
 	}
 	
@@ -283,24 +284,23 @@ public class Tokenizer {
 		} catch (Exception e){}
 		
 		t.TokenTable();
-		System.setOut(sysout);
+		try {
+			out = new PrintStream(new FileOutputStream("output\\output.txt"));
+			System.setOut(out);
+		} catch (Exception e){}
+		//System.setOut(sysout);
 		conceptMining c = new conceptMining(t.tokenTable);
 		//t.binaryTable();
 		t.tokenTable.sort(new TokenComparator());
-		for (int i = 0; i < t.tokenTable.size(); i ++) {
+		//for (int i = 0; i < t.tokenTable.size(); i ++) {
 			//System.out.println(i + " " + t.tokenTable.get(i).DID + " " + t.tokenTable.get(i).token);
-		}
+		//}
 		ArrayList<TFIDF> list2 = t.computeTFIDF(DocumentCount);
 
 		double max = 0f;
 		double last = list2.get(0).tfidf;
 		String lastToken = "";
 		int lastTokenDID = 0;
-		
-		try {
-			out = new PrintStream(new FileOutputStream("output\\output.txt"));
-			System.setOut(out);
-		} catch (Exception e){}
 		
 		//print out document ID / Token / TFIDF
 		for (TFIDF a : list2) {
@@ -337,7 +337,7 @@ public class Tokenizer {
 		for (TFIDF a : list2) {
 			double p = (double) i / (double) list2.size();
 			//cut off at 80% ~ 95%
-			if (p < 0.8f || p > 0.95f)
+			if (p < 0.4f || p > 0.90f)
 				System.out.println(a.DID + " " + a.token + " " + 0);
 			else {
 				System.out.println(a.DID + " " + a.token + " " + 1);
@@ -346,10 +346,14 @@ public class Tokenizer {
 			}
 			i ++;
 		}
+		int count = t.DID;
 		try {
-			out = new PrintStream(new FileOutputStream("output\\TwoConcept_output.txt"));
-			System.setOut(out);
-		} catch (Exception e) {}
-		c.twoConcept(keywords, t.DID);
+			t.finalize();
+		} catch (Throwable e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.setOut(sysout);
+		c.twoConcept(keywords, count);
 	}
 }

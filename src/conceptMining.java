@@ -1,3 +1,4 @@
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -34,7 +35,7 @@ class entryComparator implements  Comparator<Map.Entry<String, Double>>{
 
 public class conceptMining{	
 	//
-	public static int threashold = 2;
+	public static int threashold = 10;
 	ArrayList<Token> tokenTable;
 	
 	public conceptMining(ArrayList<Token> t) {
@@ -49,12 +50,12 @@ public class conceptMining{
 		 for (int i = 0 ; i < df.length; i ++)
 			 df[i] = new BooleanMap();
 		 
-		 for (int i = 0; i < tokenTable.size() - 1; i ++) 
+		 for (int i = 0; i < tokenTable.size() - 1; i ++) {
+			 if (i % 1000 == 0) System.out.println(i + "/" + tokenTable.size());
 			 if (keywords[tokenTable.get(i).DID].get(tokenTable.get(i).token))
-				 for (int j = i + 1; j < tokenTable.size() && 
-						 			 tokenTable.get(i).DID == tokenTable.get(j).DID && 
-						 			 !tokenTable.get(i).token.equals(tokenTable.get(j).token); 
-						 		     j ++) 
+				 for (int j = i + 1; j < Math.min(tokenTable.size(), i + 7); j ++) {
+					 if (tokenTable.get(i).DID != tokenTable.get(j).DID || tokenTable.get(i).token.equals(tokenTable.get(j).token))
+							 break;
 				 	 if (keywords[tokenTable.get(j).DID].get(tokenTable.get(j).token)){
 						 String t = tokenTable.get(i).token + " " + tokenTable.get(j).token;
 						 df[tokenTable.get(i).DID].put(t);
@@ -63,6 +64,8 @@ public class conceptMining{
 						 else 
 							 frequency.put(t, 1.0f / (double) (j - i));
 				 }
+			}
+		 }
 		 
 		 ArrayList<Entry<String, Double>> list = new  ArrayList<Entry<String, Double>>();
 		 Iterator<Entry<String, Double>> it = frequency.entrySet().iterator();
@@ -77,46 +80,15 @@ public class conceptMining{
 				 //System.out.println(entry.getKey() + " " + entry.getValue());
 			 it.remove();
 		 }
+		 
+			try {
+				PrintStream out = new PrintStream(new FileOutputStream("output\\output_twoConcept.txt"));
+				System.setOut(out);
+			} catch (Exception e){}
+			
 		 list.sort(new entryComparator());
 		 for (Map.Entry<String, Double> e : list)
 			 System.out.println(e.getKey() + " " + e.getValue());
 	}
 }
 	
-	
-	
-//	public int count;
-//	public String[] tokens;
-//	public boolean[] table;
-//	
-//	public DocumentTable() {
-//		count = 0;
-//		tokens = new String[65536];
-//		table = new boolean[65536];
-//	}
-//	
-//	public void add(String t) {
-//		tokens[count] = t;
-//		table[count] = true;
-//		count ++;
-//	};
-//}
-//
-//public class BinaryTable {
-//	public int size;
-//	DocumentTable[] table;
-//	
-//	public BinaryTable(int documentCount) {
-//		table = new DocumentTable[documentCount];
-//	}
-//	
-//	public void add(int did, String token) {
-//		table[did].add(token);
-//	}
-//	
-//	public void twoConcept() {
-//		
-//	}
-	
-	
-//}
